@@ -8,11 +8,15 @@
 </head>
 <body>
 
+    <button id="hamburger-btn" class="hamburger">&#9776;</button>
+    <div id="overlay" class="sidebar-overlay"></div>
+
     <aside id="sidebar">
         <h2>System Core</h2>
         <nav class="nav-menu">
             <button class="nav-btn active" onclick="location.href='dashboard.html'">Dashboard</button>
             <button class="nav-btn" onclick="location.href='admin.html'">Gerenciar Usuários</button>
+            <button class="nav-btn" onclick="localStorage.setItem('navegar-aba', 'pending'); location.href='admin.html';">Liberações</button>
             <button id="btn-exit" class="nav-btn btn-logout">Sair do Painel</button>
         </nav>
     </aside>
@@ -43,7 +47,7 @@
     <button id="theme-toggle" class="theme-btn">&#9681;</button>
 
     <script>
-        // Verificação de Segurança e Logoff Diário Autônomo
+        // Verificação e Logoff Diário Autônomo
         const localData = JSON.parse(localStorage.getItem('acervo-usuario'));
         const hojeString = new Date().toLocaleDateString('pt-BR');
 
@@ -54,21 +58,35 @@
             window.location.replace('/login');
         }
 
-        // Sistema Otimizado de Sincronização do Tema Escuro
+        // Sistema de Sincronização do Tema Escuro
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-theme');
         }
 
         document.getElementById('theme-toggle').addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
-            const isDark = document.body.classList.contains('dark-theme');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
         });
 
-        // Configuração dinâmica da API para o Render
-        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        // Responsividade do Menu Lateral (Mobile)
+        const sidebar = document.getElementById('sidebar');
+        const hamburgerBtn = document.getElementById('hamburger-btn');
+        const overlay = document.getElementById('overlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+        function closeMenu() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+        }
+        hamburgerBtn.addEventListener('click', toggleMenu);
+        overlay.addEventListener('click', closeMenu);
+
+        const apiBase = window.location.protocol === 'file:'
             ? 'http://localhost:4000'
-            : 'https://admin-acervo.onrender.com';
+            : window.location.origin;
 
         async function loadMetrics() {
             try {

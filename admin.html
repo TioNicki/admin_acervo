@@ -65,6 +65,8 @@
         </div>
     </div>
 
+    <button id="theme-toggle" class="theme-btn">&#9681;</button>
+
     <script>
         // Verificação de Segurança e Logoff Diário
         const localData = JSON.parse(localStorage.getItem('acervo-usuario'));
@@ -77,12 +79,21 @@
             window.location.replace('/login');
         }
 
+        // Sincronização do Tema Escuro
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        });
+
         const apiBase = window.location.protocol === 'file:'
             ? 'http://localhost:4000'
             : window.location.origin;
 
         let serverData = { usuarios: [] };
-        let activeTab = 'users'; // Começa direto na aba operacional de gerenciamento
+        let activeTab = 'users'; 
         let subFilter = 'all'; 
         let searchQuery = '';
 
@@ -91,6 +102,8 @@
         const overlay = document.getElementById('overlay');
         const detailsModal = document.getElementById('details-modal');
         const searchInput = document.getElementById('search-input');
+        const mUsers = document.getElementById('menu-users');
+        const mPending = document.getElementById('menu-pending');
 
         function toggleMenu() {
             sidebar.classList.toggle('open');
@@ -139,6 +152,14 @@
                 document.getElementById('mini-active').textContent = ativos;
                 document.getElementById('mini-blocked').textContent = bloqueados;
 
+                // Captura se o clique veio do Dashboard querendo ver as Liberações Direto
+                if (localStorage.getItem('navegar-aba') === 'pending') {
+                    localStorage.removeItem('navegar-aba');
+                    activeTab = 'pending';
+                    mUsers.classList.remove('active');
+                    mPending.classList.add('active');
+                }
+
                 renderView();
             } catch (err) {
                 console.error("Erro ao processar dados de usuários:", err);
@@ -155,8 +176,10 @@
 
             if (activeTab === 'users') {
                 miniMetricsGrid.classList.remove('hidden');
+                title.textContent = "Gerenciamento de Usuários";
             } else {
                 miniMetricsGrid.classList.add('hidden');
+                title.textContent = "Liberações Pendentes";
             }
 
             let listaFiltrada = serverData.usuarios;
@@ -183,7 +206,6 @@
             }
 
             if (activeTab === 'users') {
-                title.textContent = "Gerenciamento de Usuários";
                 thead.innerHTML = `
                     <tr>
                         <th>ID</th>
@@ -222,7 +244,6 @@
             } 
             
             else if (activeTab === 'pending') {
-                title.textContent = "Liberações Pendentes";
                 thead.innerHTML = `
                     <tr>
                         <th>ID</th>
@@ -289,9 +310,6 @@
                 alert('Erro na comunicação com o servidor.');
             }
         }
-
-        const mUsers = document.getElementById('menu-users');
-        const mPending = document.getElementById('menu-pending');
 
         function navigate(tabName, clickedBtn) {
             activeTab = tabName;
