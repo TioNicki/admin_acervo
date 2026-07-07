@@ -162,25 +162,99 @@ app.put('/api/admin/usuarios/:id/status', async (req, res) => {
   }
 });
 
-// API: Salvar Comunicado/Aviso Geral na tabela aviso_acervo
+// ==========================================
+//        SISTEMA COMPLETO DE AVISOS
+// ==========================================
+
+// API: Buscar todos os avisos cadastrados (histórico geral)
+app.get('/api/admin/avisos', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, aviso, ativo, created_at FROM aviso_acervo ORDER BY id DESC');
+    return res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao buscar avisos:', error);
+    return res.status(500).json({ error: 'Erro ao buscar histórico de avisos.' });
+  }
+});
+
+// API: Criar um novo aviso (Desativa os antigos para manter apenas o novo como ativo principal)
 app.post('/api/admin/aviso', async (req, res) => {
   try {
     const { aviso } = req.body;
-
     if (!aviso || aviso.trim() === "") {
       return res.status(400).json({ error: 'O conteúdo do aviso não pode ser vazio.' });
     }
 
-    // Insere o aviso na coluna 'aviso' da tabela 'aviso_acervo'
-    await pool.query(
-      'INSERT INTO aviso_acervo (aviso) VALUES ($1)',
+    // Desativa avisos antigos para que apenas o atual fique em destaque na home
+    await pool.query('UPDATE aviso_acervo SET ativo = false');
+
+    const result = await pool.query(
+      'INSERT INTO aviso_acervo (aviso, ativo) VALUES ($1, true) RETURNING *',
       [aviso.trim()]
     );
-
-    return res.json({ success: true, message: 'Aviso registrado com sucesso.' });
+    return res.json({ success: true, aviso: result.rows[0] });
   } catch (error) {
     console.error('Erro ao registrar aviso:', error);
     return res.status(500).json({ error: 'Erro interno ao salvar no banco.' });
+  }
+});
+
+// API: Editar/Atualizar o texto de um aviso existente
+app.put('/api/admin/aviso/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { aviso } = req.body;
+    if (!aviso || aviso.trim() === "") {
+      return res.status(400).json({ error: 'O conteúdo do aviso não pode ser vazio.' });
+    }
+
+    const result = await pool.query(
+      'UPDATE aviso_acervo SET aviso = $1 WHERE id = $2 RETURNING id',
+      [aviso.trim(), Number(id) || 0]
+    );
+
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Aviso não localizado.' });
+    return res.json({ success: true, message: 'Aviso atualizado com sucesso.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao editar aviso.' });
+  }
+});
+
+// API: Reenviar / Alternar status Ativo (Ativa um aviso antigo e desativa os outros)
+app.put('/api/admin/aviso/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { ativo } = req.body;
+
+    if (ativo) {
+      // Se estamos reativando esse aviso, todos os outros caem para inativo
+      await pool.query('UPDATE aviso_acervo SET ativo = false');
+    }
+
+    const result = await pool.query(
+      'UPDATE aviso_acervo SET ativo = $1 WHERE id = $2 RETURNING id',
+      [Boolean(ativo), Number(id) || 0]
+    );
+
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Aviso não localizado.' });
+    return res.json({ success: true, message: 'Status do aviso alterado.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao alterar status do aviso.' });
+  }
+});
+
+// API: Excluir um aviso definitivamente
+app.delete('/api/admin/aviso/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM aviso_acervo WHERE id = $1 RETURNING id', [Number(id) || 0]);
+    if (result.rowCount === 0) return res.status(404).json({ error: 'Aviso não localizado.' });
+    return res.json({ success: true, message: 'Aviso removido com sucesso.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro ao excluir aviso.' });
   }
 });
 
