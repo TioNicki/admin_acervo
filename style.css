@@ -57,6 +57,9 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+/* ==========================================
+   SIDEBAR & BOTÕES DO MENU LATERAL
+   ========================================== */
 aside {
     width: 280px;
     height: 100vh;
@@ -133,13 +136,32 @@ h1 {
     margin-bottom: 2rem;
 }
 
+/* ==========================================
+   GRID DO DASHBOARD PRINCIPAL (LINHA ÚNICA)
+   ========================================== */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(4, 1fr); /* Força exatamente 4 colunas */
     gap: 1.5rem;
     margin-bottom: 3rem;
 }
 
+.metric-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 1.8rem;
+    border-radius: var(--rounded);
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.metric-card:hover { transform: translateY(-3px); }
+.metric-card p { margin: 0; color: var(--text-light); font-size: 0.9rem; font-weight: 600; }
+.metric-card span { font-size: 2.5rem; font-weight: 700; color: var(--button-bg); display: block; margin-top: 0.5rem; }
+
+/* ==========================================
+   MINICARDS (ABA USUÁRIOS)
+   ========================================== */
 .mini-metrics-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -173,6 +195,9 @@ h1 {
 .mini-metric-card p { margin: 0; color: var(--text-light); font-size: 0.8rem; font-weight: 600; }
 .mini-metric-card span { font-size: 1.4rem; font-weight: 700; color: var(--button-bg); display: block; margin-top: 0.2rem; }
 
+/* ==========================================
+   BUSCA, TABELAS E UTILITÁRIOS
+   ========================================== */
 .search-container {
     margin-bottom: 1.5rem;
     width: 100%;
@@ -196,19 +221,6 @@ h1 {
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(142, 115, 104, 0.1);
 }
-
-.metric-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    padding: 1.8rem;
-    border-radius: var(--rounded);
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-}
-
-.metric-card:hover { transform: translateY(-3px); }
-.metric-card p { margin: 0; color: var(--text-light); font-size: 0.9rem; font-weight: 600; }
-.metric-card span { font-size: 2.5rem; font-weight: 700; color: var(--button-bg); display: block; margin-top: 0.5rem; }
 
 .table-container {
     background: var(--card-bg);
@@ -270,6 +282,9 @@ td { font-size: 0.95rem; }
     z-index: 40;
 }
 
+/* ==========================================
+   MODAL DE DETALHES
+   ========================================== */
 .modal {
     display: none;
     position: fixed;
@@ -335,6 +350,9 @@ td { font-size: 0.95rem; }
     to { opacity: 1; transform: scale(1); }
 }
 
+/* ==========================================
+   OTIMIZAÇÃO MOBILE (TRAVADO EM LINHA ÚNICA)
+   ========================================== */
 @media (max-width: 900px) {
     .hamburger { display: block; }
     aside { left: -280px; }
@@ -342,6 +360,26 @@ td { font-size: 0.95rem; }
     main { margin-left: 0; padding: 6rem 1.5rem 3rem 1.5rem; }
     h1 { font-size: 1.8rem; }
     .sidebar-overlay.active { display: block; }
-    .mini-metrics-grid { grid-template-columns: 1fr; gap: 0.5rem; }
+    
+    /* Configuração perfeita de linha única com rolagem lateral no mobile */
+    .metrics-grid {
+        grid-template-columns: repeat(4, minmax(240px, 1fr)); 
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        padding-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .metric-card {
+        scroll-snap-align: start;
+    }
+
+    .mini-metrics-grid { 
+        grid-template-columns: repeat(3, minmax(130px, 1fr)); 
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+        gap: 0.6rem;
+    }
+    
     th, td { padding: 1rem 0.8rem; }
 }

@@ -40,8 +40,10 @@
         </div>
     </main>
 
+    <button id="theme-toggle" class="theme-btn">&#9681;</button>
+
     <script>
-        // Verificação e Logoff Diário Autônomo
+        // Verificação de Segurança e Logoff Diário Autônomo
         const localData = JSON.parse(localStorage.getItem('acervo-usuario'));
         const hojeString = new Date().toLocaleDateString('pt-BR');
 
@@ -52,9 +54,21 @@
             window.location.replace('/login');
         }
 
-        const apiBase = window.location.protocol === 'file:'
+        // Sistema Otimizado de Sincronização do Tema Escuro
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+
+        // Configuração dinâmica da API para o Render
+        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:4000'
-            : window.location.origin;
+            : 'https://admin-acervo.onrender.com';
 
         async function loadMetrics() {
             try {
