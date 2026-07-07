@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visão Geral - Sistema Core</title>
+    </head>
+<body>
+
+    <aside id="sidebar">
+        <h2>System Core</h2>
+        <nav class="nav-menu">
+            <button class="nav-btn active" onclick="location.href='dashboard.html'">Dashboard</button>
+            <button class="nav-btn" onclick="location.href='admin.html'">Gerenciar Usuários</button>
+            <button id="btn-exit" class="nav-btn btn-logout">Sair do Painel</button>
+        </nav>
+    </aside>
+
+    <main>
+        <h1>Visão Geral do Sistema</h1>
+        
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <p>Livros Registrados (Mês)</p>
+                <span id="m-books-month">Carregando...</span>
+            </div>
+            <div class="metric-card">
+                <p>Total Geral de Livros</p>
+                <span id="m-books-total">Carregando...</span>
+            </div>
+            <div class="metric-card">
+                <p>Novos Usuários (Mês)</p>
+                <span id="m-users-month">Carregando...</span>
+            </div>
+            <div class="metric-card">
+                <p>Total Geral de Usuários</p>
+                <span id="m-users-total">Carregando...</span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Verificação e Logoff Diário Autônomo
+        const localData = JSON.parse(localStorage.getItem('acervo-usuario'));
+        const hojeString = new Date().toLocaleDateString('pt-BR');
+
+        if (!localData || localData.cargo !== 'admin') {
+            window.location.replace('/login');
+        } else if (localData.dataLogin !== hojeString) {
+            localStorage.removeItem('acervo-usuario');
+            window.location.replace('/login');
+        }
+
+        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:4000'
+            : 'https://admin-acervo.onrender.com';
+
+        async function loadMetrics() {
+            try {
+                const response = await fetch(`${apiBase}/api/admin/dashboard`);
+                if (!response.ok) throw new Error();
+                const serverData = await response.json();
+                
+                document.getElementById('m-books-month').textContent = serverData.metrics.livrosMes;
+                document.getElementById('m-books-total').textContent = serverData.metrics.totalLivros;
+                document.getElementById('m-users-month').textContent = serverData.metrics.usuariosMes;
+                document.getElementById('m-users-total').textContent = serverData.metrics.totalUsuarios;
+            } catch (err) {
+                console.error("Erro ao buscar métricas:", err);
+            }
+        }
+
+        document.getElementById('btn-exit').addEventListener('click', () => {
+            localStorage.removeItem('acervo-usuario');
+            window.location.href = '/login';
+        });
+
+        loadMetrics();
+    </script>
+</body>
+</html>

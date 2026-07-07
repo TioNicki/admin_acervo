@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Restrito - Core Admin</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght=700&family=Open+Sans:wght=400;600;700&display=swap');
+
+        :root {
+            --bg-color: #f8f9fa;      
+            --card-bg: #ffffff;      
+            --text-dark: #2b1d1d;    
+            --text-light: #6c757d;   
+            --accent: #8e7368;       
+            --button-bg: #4a3728;    
+            --button-hover: #36281e; 
+            --shadow: 0 15px 35px rgba(0, 0, 0, 0.05); 
+            --border-color: #e9ecef;
+            --rounded: 16px;         
+            --transition: all 0.25s ease-in-out;
+            --danger: #e63946;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0; padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--rounded);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            padding: 2.5rem;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h2 {
+            font-family: 'Merriweather', serif;
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-dark);
+            font-family: inherit;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(142, 115, 104, 0.1);
+            background: var(--card-bg);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: var(--button-bg);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 1rem;
+        }
+
+        .btn-login:hover {
+            background: var(--button-hover);
+            transform: translateY(-1px);
+        }
+
+        .error-message {
+            color: var(--danger);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h2>System Core</h2>
+        <p>Painel Administrativo Restrito</p>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Usuário</label>
+                <input type="text" id="username" class="form-input" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" class="form-input" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn-login">Entrar no Painel</button>
+            <div id="error-box" class="error-message"></div>
+        </form>
+    </div>
+
+    <script>
+        // Configuração dinâmica da API idêntica ao dashboard
+        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:4000'
+            : 'https://admin-acervo.onrender.com';
+
+        const loginForm = document.getElementById('login-form');
+        const errorBox = document.getElementById('error-box');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorBox.style.display = 'none';
+
+            const usuario = document.getElementById('username').value.trim();
+            const senha = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(`${apiBase}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, senha })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Falha ao realizar login.');
+                }
+
+                // Salva os dados de validação do administrador no navegador
+                localStorage.setItem('acervo-usuario', JSON.stringify({
+                    id: data.id,
+                    usuario: data.usuario,
+                    cargo: data.cargo
+                }));
+
+                // Redireciona para o painel principal
+                window.location.href = '/';
+
+            } catch (err) {
+                errorBox.textContent = err.message;
+                errorBox.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

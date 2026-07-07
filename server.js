@@ -24,11 +24,58 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
+// ==========================================
+//           ROTAS DE PAGINAÇÃO (HTML)
+// ==========================================
+
+// Redireciona a raiz para o dashboard por padrão
 app.get('/', (req, res) => {
+  res.redirect('/dashboard');
+});
+
+app.get('/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dashboard.html'));
+});
+
+app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// API: Dashboard - Puxando métricas reais baseadas em 'created_at', 'aprovado' e 'solicitado'
+app.get('/login', (req, res) => {
+  res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+// ==========================================
+//                ROTAS DA API
+// ==========================================
+
+// API: Login Administrativo (Valida se o cargo é estritamente 'admin')
+app.post('/api/admin/login', async (req, res) => {
+  const { usuario, senha } = req.body;
+  try {
+    const result = await pool.query(
+      'SELECT id, usuario, senha, cargo FROM usuarios_acervo WHERE usuario = $1',
+      [usuario]
+    );
+
+    const user = result.rows[0];
+
+    if (!user || user.senha !== senha) {
+      return res.status(401).json({ error: 'Usuário ou senha incorretos.' });
+    }
+
+    if (user.cargo !== 'admin') {
+      return res.status(403).json({ error: 'Acesso negado. Apenas administradores.' });
+    }
+
+    return res.json({ id: user.id, usuario: user.usuario, cargo: user.cargo });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro interno no servidor.' });
+  }
+});
+
+// API: Dashboard e Gerenciamento - Métricas reais baseadas em 'created_at', 'aprovado' e 'solicitado'
 app.get('/api/admin/dashboard', async (req, res) => {
   try {
     // 1. Busca usuários incluindo as colunas 'solicitado' e 'created_at' reais
@@ -108,13 +155,14 @@ app.put('/api/admin/usuarios/:id/status', async (req, res) => {
       return res.status(404).json({ error: 'Usuário não localizado.' });
     }
 
-    return res.json({ success: true, message: 'Status atualizado com sucesso.' });
+    return res.json({ success: true, message: 'Status updated successfully.' });
   } catch (error) {
     console.error('Erro ao atualizar status do usuário:', error);
     return res.status(500).json({ error: 'Erro ao processar alteração no banco.' });
   }
 });
 
+// Inicialização do Servidor (Sempre no fim do arquivo)
 app.listen(port, () => {
   console.log(`[DASHBOARD ENGINE] Sincronizado com tabelas oficiais na porta ${port}`);
 });
