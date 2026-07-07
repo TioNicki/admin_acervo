@@ -162,6 +162,28 @@ app.put('/api/admin/usuarios/:id/status', async (req, res) => {
   }
 });
 
+// API: Salvar Comunicado/Aviso Geral na tabela aviso_acervo
+app.post('/api/admin/aviso', async (req, res) => {
+  try {
+    const { aviso } = req.body;
+
+    if (!aviso || aviso.trim() === "") {
+      return res.status(400).json({ error: 'O conteúdo do aviso não pode ser vazio.' });
+    }
+
+    // Insere o aviso na coluna 'aviso' da tabela 'aviso_acervo'
+    await pool.query(
+      'INSERT INTO aviso_acervo (aviso) VALUES ($1)',
+      [aviso.trim()]
+    );
+
+    return res.json({ success: true, message: 'Aviso registrado com sucesso.' });
+  } catch (error) {
+    console.error('Erro ao registrar aviso:', error);
+    return res.status(500).json({ error: 'Erro interno ao salvar no banco.' });
+  }
+});
+
 // Inicialização do Servidor (Sempre no fim do arquivo)
 app.listen(port, () => {
   console.log(`[DASHBOARD ENGINE] Sincronizado com tabelas oficiais na porta ${port}`);

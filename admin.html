@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gerenciamento Core - Admin</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilo rápido para a caixa de texto de aviso ficar elegante */
+        .notice-textarea {
+            width: 100%;
+            height: 120px;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-dark);
+            font-family: inherit;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            outline: none;
+            resize: vertical;
+            transition: var(--transition);
+            margin-bottom: 1rem;
+        }
+        .notice-textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(142, 115, 104, 0.1);
+        }
+    </style>
 </head>
 <body>
 
@@ -17,6 +40,7 @@
             <button class="nav-btn" onclick="location.href='dashboard.html'">Dashboard</button>
             <button id="menu-users" class="nav-btn active">Gerenciar Usuários</button>
             <button id="menu-pending" class="nav-btn">Liberações</button>
+            <button id="menu-notice" class="nav-btn">Enviar Aviso</button>
             <button id="btn-exit" class="nav-btn btn-logout">Sair do Painel</button>
         </nav>
     </aside>
@@ -24,6 +48,7 @@
     <main>
         <h1 id="main-title">Gerenciamento de Usuários</h1>
         
+        <!-- ELEMENTOS DE USUÁRIOS (GERENCIAMENTO) -->
         <div id="section-mini-metrics" class="mini-metrics-grid">
             <div id="card-filter-all" class="mini-metric-card active" onclick="setSubFilter('all')">
                 <p>Total Geral</p>
@@ -45,12 +70,20 @@
 
         <div id="section-table-box" class="table-container">
             <table>
-                <thead id="table-head-content">
-                    </thead>
+                <thead id="table-head-content"></thead>
                 <tbody id="table-body-content">
                     <tr><td colspan="3" style="text-align:center;">Carregando base de dados...</td></tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- SEÇÃO NOVA: ENVIAR AVISO (ESCONDIDA POR PADRÃO) -->
+        <div id="section-notice" class="table-container hidden" style="padding: 2rem;">
+            <p style="margin-top: 0; font-weight: 600; color: var(--text-light);">Escreva o aviso que será exibido na tela principal do sistema:</p>
+            <form id="notice-form">
+                <textarea id="notice-text" class="notice-textarea" placeholder="Digite o comunicado geral aqui..." required></textarea>
+                <button type="submit" class="action-btn btn-approve" style="padding: 12px 24px;">Publicar Aviso</button>
+            </form>
         </div>
     </main>
 
@@ -60,15 +93,13 @@
                 <h3 id="modal-user-title">Detalhes do Usuário</h3>
                 <button class="close-modal" onclick="closeDetails()">&times;</button>
             </div>
-            <div id="modal-info-body">
-                </div>
+            <div id="modal-info-body"></div>
         </div>
     </div>
 
     <button id="theme-toggle" class="theme-btn">&#9681;</button>
 
     <script>
-        // Verificação de Segurança e Logoff Diário
         const localData = JSON.parse(localStorage.getItem('acervo-usuario'));
         const hojeString = new Date().toLocaleDateString('pt-BR');
 
@@ -79,7 +110,6 @@
             window.location.replace('/login');
         }
 
-        // Sincronização do Tema Escuro
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-theme');
         }
@@ -102,14 +132,15 @@
         const overlay = document.getElementById('overlay');
         const detailsModal = document.getElementById('details-modal');
         const searchInput = document.getElementById('search-input');
+        
         const mUsers = document.getElementById('menu-users');
         const mPending = document.getElementById('menu-pending');
+        const mNotice = document.getElementById('menu-notice');
 
         function toggleMenu() {
             sidebar.classList.toggle('open');
             overlay.classList.toggle('active');
         }
-
         function closeMenu() {
             sidebar.classList.remove('open');
             overlay.classList.remove('active');
@@ -144,23 +175,16 @@
                 serverData.usuarios = result.usuarios;
                 
                 const listUsersComum = serverData.usuarios.filter(u => u.cargo !== 'admin');
-                const total = listUsersComum.length;
-                const ativos = listUsersComum.filter(u => u.aprovado).length;
-                const bloqueados = listUsersComum.filter(u => !u.aprovado && !u.solicitado).length;
+                document.getElementById('mini-total').textContent = listUsersComum.length;
+                document.getElementById('mini-active').textContent = listUsersComum.filter(u => u.aprovado).length;
+                document.getElementById('mini-blocked').textContent = listUsersComum.filter(u => !u.aprovado && !u.solicitado).length;
 
-                document.getElementById('mini-total').textContent = total;
-                document.getElementById('mini-active').textContent = ativos;
-                document.getElementById('mini-blocked').textContent = bloqueados;
-
-                // Captura se o clique veio do Dashboard querendo ver as Liberações Direto
                 if (localStorage.getItem('navegar-aba') === 'pending') {
                     localStorage.removeItem('navegar-aba');
-                    activeTab = 'pending';
-                    mUsers.classList.remove('active');
-                    mPending.classList.add('active');
+                    navigate('pending', mPending);
+                } else {
+                    renderView();
                 }
-
-                renderView();
             } catch (err) {
                 console.error("Erro ao processar dados de usuários:", err);
             }
@@ -169,10 +193,27 @@
         function renderView() {
             const title = document.getElementById('main-title');
             const miniMetricsGrid = document.getElementById('section-mini-metrics');
+            const searchContainer = document.getElementById('section-search');
+            const tableBox = document.getElementById('section-table-box');
+            const noticeBox = document.getElementById('section-notice');
             const thead = document.getElementById('table-head-content');
             const tbody = document.getElementById('table-body-content');
 
             tbody.innerHTML = '';
+
+            // Lógica de exibição das abas
+            if (activeTab === 'notice') {
+                title.textContent = "Enviar Comunicado Geral";
+                miniMetricsGrid.classList.add('hidden');
+                searchContainer.classList.add('hidden');
+                tableBox.classList.add('hidden');
+                noticeBox.classList.remove('hidden');
+                return;
+            }
+
+            noticeBox.classList.add('hidden');
+            searchContainer.classList.remove('hidden');
+            tableBox.classList.remove('hidden');
 
             if (activeTab === 'users') {
                 miniMetricsGrid.classList.remove('hidden');
@@ -190,113 +231,73 @@
 
             if (activeTab === 'users') {
                 listaFiltrada = listaFiltrada.filter(u => u.cargo === 'admin' || !u.solicitado || u.aprovado);
-
-                if (subFilter === 'active') {
-                    listaFiltrada = listaFiltrada.filter(u => u.aprovado);
-                } else if (subFilter === 'blocked') {
-                    listaFiltrada = listaFiltrada.filter(u => !u.aprovado && u.cargo !== 'admin' && !u.solicitado);
-                }
+                if (subFilter === 'active') listaFiltrada = listaFiltrada.filter(u => u.aprovado);
+                else if (subFilter === 'blocked') listaFiltrada = listaFiltrada.filter(u => !u.aprovado && u.cargo !== 'admin' && !u.solicitado);
             }
 
             if (searchQuery !== '') {
-                listaFiltrada = listaFiltrada.filter(u => 
-                    String(u.id).includes(searchQuery) || 
-                    u.usuario.toLowerCase().includes(searchQuery)
-                );
+                listaFiltrada = listaFiltrada.filter(u => String(u.id).includes(searchQuery) || u.usuario.toLowerCase().includes(searchQuery));
             }
 
             if (activeTab === 'users') {
-                thead.innerHTML = `
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome de Usuário</th>
-                        <th style="text-align: right;">Ações</th>
-                    </tr>
-                `;
-                
+                thead.innerHTML = `<tr><th>ID</th><th>Nome de Usuário</th><th style="text-align: right;">Ações</th></tr>`;
                 if (listaFiltrada.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Nenhum usuário correspondente nesta categoria.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Nenhum usuário correspondente.</td></tr>`;
                     return;
                 }
-
                 listaFiltrada.forEach(u => {
                     const tr = document.createElement('tr');
                     const isAdm = u.cargo === 'admin';
-                    
-                    let toggleAction = isAdm 
-                        ? `<small>Acesso Mestre</small>` 
-                        : (u.aprovado 
-                            ? `<button class="action-btn btn-block" onclick="changeStatus('${u.id}', false, false)">Bloquear</button>` 
-                            : `<button class="action-btn btn-approve" onclick="changeStatus('${u.id}', true, false)">Ativar</button>`);
-                    
-                    tr.innerHTML = `
-                        <td>#${u.id}</td>
-                        <td><strong>${u.usuario}</strong></td>
-                        <td style="text-align: right;">
-                            <div class="actions-cell" style="justify-content: flex-end;">
-                                <button class="action-btn btn-details" onclick="openDetails('${u.id}')">Detalhes</button>
-                                ${toggleAction}
-                            </div>
-                        </td>
-                    `;
+                    let toggleAction = isAdm ? `<small>Acesso Mestre</small>` : (u.aprovado ? `<button class="action-btn btn-block" onclick="changeStatus('${u.id}', false, false)">Bloquear</button>` : `<button class="action-btn btn-approve" onclick="changeStatus('${u.id}', true, false)">Ativar</button>`);
+                    tr.innerHTML = `<td>#${u.id}</td><td><strong>${u.usuario}</strong></td><td style="text-align: right;"><div class="actions-cell" style="justify-content: flex-end;"><button class="action-btn btn-details" onclick="openDetails('${u.id}')">Detalhes</button>${toggleAction}</div></td>`;
                     tbody.appendChild(tr);
                 });
-            } 
-            
-            else if (activeTab === 'pending') {
-                thead.innerHTML = `
-                    <tr>
-                        <th>ID</th>
-                        <th>Nome do Solicitante</th>
-                        <th style="text-align: right;">Ações de Liberação</th>
-                    </tr>
-                `;
-                
+            } else if (activeTab === 'pending') {
+                thead.innerHTML = `<tr><th>ID</th><th>Nome do Solicitante</th><th style="text-align: right;">Ações de Liberação</th></tr>`;
                 if (listaFiltrada.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Nenhuma nova solicitação de entrada.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;">Nenhuma nova solicitação.</td></tr>`;
                     return;
                 }
-
                 listaFiltrada.forEach(u => {
                     const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td>#${u.id}</td>
-                        <td><strong>${u.usuario}</strong></td>
-                        <td style="text-align: right;">
-                            <div class="actions-cell" style="justify-content: flex-end;">
-                                <button class="action-btn btn-details" onclick="openDetails('${u.id}')">Detalhes</button>
-                                <button class="action-btn btn-approve" onclick="changeStatus('${u.id}', true, false)">Aprovar Entrada</button>
-                            </div>
-                        </td>
-                    `;
+                    tr.innerHTML = `<td>#${u.id}</td><td><strong>${u.usuario}</strong></td><td style="text-align: right;"><div class="actions-cell" style="justify-content: flex-end;"><button class="action-btn btn-details" onclick="openDetails('${u.id}')">Detalhes</button><button class="action-btn btn-approve" onclick="changeStatus('${u.id}', true, false)">Aprovar Entrada</button></div></td>`;
                     tbody.appendChild(tr);
                 });
             }
         }
+
+        // Envio do formulário de aviso
+        document.getElementById('notice-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const aviso = document.getElementById('notice-text').value.trim();
+
+            try {
+                const response = await fetch(`${apiBase}/api/admin/aviso`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ aviso })
+                });
+
+                if (response.ok) {
+                    alert('Aviso publicado com sucesso no site principal!');
+                    document.getElementById('notice-text').value = '';
+                } else {
+                    alert('Erro ao publicar o aviso.');
+                }
+            } catch (err) {
+                alert('Erro na comunicação com o servidor.');
+            }
+        });
 
         function openDetails(userId) {
             const user = serverData.usuarios.find(u => String(u.id) === String(userId));
             if (!user) return;
-
             document.getElementById('modal-user-title').textContent = `Dados de @${user.usuario}`;
-            const dataCadastro = user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : "Não informada";
             let situacaoText = user.aprovado ? 'Aprovado / Ativo' : (user.solicitado ? 'Aguardando Liberação' : 'Conta Bloqueada');
-
-            const body = document.getElementById('modal-info-body');
-            body.innerHTML = `
-                <div class="info-row"><span>ID da Conta:</span><span>#${user.id}</span></div>
-                <div class="info-row"><span>Nome de Usuário:</span><span>${user.usuario}</span></div>
-                <div class="info-row"><span>Cargo atribuído:</span><span>${user.cargo === 'admin' ? 'Administrador' : 'Membro'}</span></div>
-                <div class="info-row"><span>Situação do Cadastro:</span><span>${situacaoText}</span></div>
-                <div class="info-row"><span>Data de Cadastro:</span><span>${dataCadastro}</span></div>
-                <div class="info-row"><span>Total de Livros no Acervo:</span><span>${user.total_livros || 0} livros</span></div>
-                <div class="info-row"><span>Livros Adicionados no Mês:</span><span>${user.livros_mes || 0} livros</span></div>
-            `;
+            document.getElementById('modal-info-body').innerHTML = `<div class="info-row"><span>ID:</span><span>#${user.id}</span></div><div class="info-row"><span>Usuário:</span><span>${user.usuario}</span></div><div class="info-row"><span>Cargo:</span><span>${user.cargo}</span></div><div class="info-row"><span>Situação:</span><span>${situacaoText}</span></div>`;
             detailsModal.classList.add('active');
         }
-
         function closeDetails() { detailsModal.classList.remove('active'); }
-        window.onclick = function(e) { if (e.target === detailsModal) closeDetails(); }
 
         async function changeStatus(userId, approvedState, requestedState) {
             try {
@@ -306,30 +307,23 @@
                     body: JSON.stringify({ aprovado: approvedState, solicitado: requestedState })
                 });
                 if (response.ok) loadData();
-            } catch (err) {
-                alert('Erro na comunicação com o servidor.');
-            }
+            } catch (err) { alert('Erro ao alterar status.'); }
         }
 
         function navigate(tabName, clickedBtn) {
             activeTab = tabName;
-            subFilter = 'all'; 
-            searchQuery = ''; 
-            searchInput.value = '';
+            subFilter = 'all'; searchQuery = ''; searchInput.value = '';
             mUsers.classList.remove('active');
             mPending.classList.remove('active');
+            mNotice.classList.remove('active');
             clickedBtn.classList.add('active');
-            
-            document.getElementById('card-filter-all').classList.add('active');
-            document.getElementById('card-filter-active').classList.remove('active');
-            document.getElementById('card-filter-blocked').classList.remove('active');
-
             renderView();
             closeMenu();
         }
 
         mUsers.addEventListener('click', () => navigate('users', mUsers));
         mPending.addEventListener('click', () => navigate('pending', mPending));
+        mNotice.addEventListener('click', () => navigate('notice', mNotice));
 
         document.getElementById('btn-exit').addEventListener('click', () => {
             localStorage.removeItem('acervo-usuario');
