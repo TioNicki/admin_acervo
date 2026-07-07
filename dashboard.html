@@ -26,20 +26,20 @@
         
         <div class="metrics-grid">
             <div class="metric-card">
-                <p>Livros Registrados (Mês)</p>
-                <span id="m-books-month">Carregando...</span>
+                <p>Livros (Mês)</p>
+                <span id="m-books-month">...</span>
             </div>
             <div class="metric-card">
-                <p>Total Geral de Livros</p>
-                <span id="m-books-total">Carregando...</span>
+                <p>Total Livros</p>
+                <span id="m-books-total">...</span>
             </div>
             <div class="metric-card">
-                <p>Novos Usuários (Mês)</p>
-                <span id="m-users-month">Carregando...</span>
+                <p>Usuários (Mês)</p>
+                <span id="m-users-month">...</span>
             </div>
             <div class="metric-card">
-                <p>Total Geral de Usuários</p>
-                <span id="m-users-total">Carregando...</span>
+                <p>Total Usuários</p>
+                <span id="m-users-total">...</span>
             </div>
         </div>
     </main>
@@ -47,7 +47,6 @@
     <button id="theme-toggle" class="theme-btn">&#9681;</button>
 
     <script>
-        // Verificação e Logoff Diário Autônomo
         const localData = JSON.parse(localStorage.getItem('acervo-usuario'));
         const hojeString = new Date().toLocaleDateString('pt-BR');
 
@@ -58,7 +57,6 @@
             window.location.replace('/login');
         }
 
-        // Sistema de Sincronização do Tema Escuro
         if (localStorage.getItem('theme') === 'dark') {
             document.body.classList.add('dark-theme');
         }
@@ -68,7 +66,6 @@
             localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
         });
 
-        // Responsividade do Menu Lateral (Mobile)
         const sidebar = document.getElementById('sidebar');
         const hamburgerBtn = document.getElementById('hamburger-btn');
         const overlay = document.getElementById('overlay');

@@ -57,6 +57,9 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+/* ==========================================
+   SIDEBAR & BOTÕES DO MENU LATERAL
+   ========================================== */
 aside {
     width: 280px;
     height: 100vh;
@@ -133,6 +136,9 @@ h1 {
     margin-bottom: 2rem;
 }
 
+/* ==========================================
+   GRID DO DASHBOARD PRINCIPAL (DESKTOP)
+   ========================================== */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -153,6 +159,9 @@ h1 {
 .metric-card p { margin: 0; color: var(--text-light); font-size: 0.9rem; font-weight: 600; }
 .metric-card span { font-size: 2.5rem; font-weight: 700; color: var(--button-bg); display: block; margin-top: 0.5rem; }
 
+/* ==========================================
+   MINICARDS (ABA USUÁRIOS)
+   ========================================== */
 .mini-metrics-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -186,6 +195,9 @@ h1 {
 .mini-metric-card p { margin: 0; color: var(--text-light); font-size: 0.8rem; font-weight: 600; }
 .mini-metric-card span { font-size: 1.4rem; font-weight: 700; color: var(--button-bg); display: block; margin-top: 0.2rem; }
 
+/* ==========================================
+   BUSCA, TABELAS E UTILITÁRIOS
+   ========================================== */
 .search-container {
     margin-bottom: 1.5rem;
     width: 100%;
@@ -270,6 +282,9 @@ td { font-size: 0.95rem; }
     z-index: 40;
 }
 
+/* ==========================================
+   MODAL DE DETALHES
+   ========================================== */
 .modal {
     display: none;
     position: fixed;
@@ -335,32 +350,43 @@ td { font-size: 0.95rem; }
     to { opacity: 1; transform: scale(1); }
 }
 
+/* ==========================================
+   OTIMIZAÇÃO MOBILE COMPACTA (2 POR LINHA)
+   ========================================== */
 @media (max-width: 900px) {
     .hamburger { display: block; }
     aside { left: -280px; }
     aside.open { left: 0; }
-    main { margin-left: 0; padding: 6rem 1.5rem 3rem 1.5rem; }
-    h1 { font-size: 1.8rem; }
+    main { margin-left: 0; padding: 5rem 1.2rem 3rem 1.2rem; }
+    h1 { font-size: 1.6rem; margin-bottom: 1.5rem; }
     .sidebar-overlay.active { display: block; }
     
+    /* Grid Compacto: Divide a tela exatamente ao meio em duas linhas */
     .metrics-grid {
-        grid-template-columns: repeat(4, minmax(230px, 1fr)); 
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        padding-bottom: 12px;
-        gap: 12px;
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 0.8rem;
+        margin-bottom: 2rem;
     }
 
+    /* Reduz o espaçamento interno do card para ficar menor */
     .metric-card {
-        scroll-snap-align: start;
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .metric-card p { 
+        font-size: 0.8rem; 
+    }
+
+    .metric-card span { 
+        font-size: 1.8rem; 
+        margin-top: 0.2rem; 
     }
 
     .mini-metrics-grid { 
-        grid-template-columns: repeat(3, minmax(130px, 1fr)); 
-        overflow-x: auto;
-        padding-bottom: 8px;
-        gap: 8px;
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 0.5rem;
     }
     
-    th, td { padding: 1rem 0.8rem; }
+    th, td { padding: 0.8rem 0.5rem; font-size: 0.85rem; }
 }
