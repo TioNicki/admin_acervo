@@ -51,9 +51,9 @@
             window.location.replace('/login');
         }
 
-        const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        const apiBase = window.location.protocol === 'file:'
             ? 'http://localhost:4000'
-            : 'https://admin-acervo.onrender.com';
+            : window.location.origin;
 
         async function loadMetrics() {
             try {
