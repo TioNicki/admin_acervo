@@ -420,9 +420,10 @@
     <button id="theme-toggle" class="theme-btn">&#9681;</button>
 
     <script>
+        // CONFIGURAÇÃO DO RENDER: Redireciona para o link oficial de produção na nuvem automaticamente
         const apiBase = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:4000'
-            : window.location.origin;
+            : 'https://admin-acervo.onrender.com';
 
         let serverData = { usuarios: [], metrics: {} };
         let activeTab = 'dash';
@@ -484,7 +485,6 @@
                 document.getElementById('m-users-month').textContent = serverData.metrics.usuariosMes;
                 document.getElementById('m-users-total').textContent = serverData.metrics.totalUsuarios;
                 
-                // Ignora administradores mestre das contagens e filtros comuns de auditoria
                 const listUsersComum = serverData.usuarios.filter(u => u.cargo !== 'admin');
                 
                 const total = listUsersComum.length;
@@ -533,15 +533,11 @@
 
             let listaFiltrada = serverData.usuarios;
 
-            // 1. FILTRAGEM RESTRITA DA ABA PRINCIPAL "LIBERAÇÕES PENDENTES"
             if (activeTab === 'pending') {
-                // Filtra estritamente quem solicitou entrada e ainda não foi aprovado
                 listaFiltrada = serverData.usuarios.filter(u => u.solicitado === true && !u.aprovado);
             }
 
-            // 2. FILTRAGEM DA ABA PRINCIPAL "USUÁRIOS REGISTRADOS" E SEUS MINICARDS
             if (activeTab === 'users') {
-                // Esconde solicitações novas cruas para não misturar com o painel de usuários geral
                 listaFiltrada = listaFiltrada.filter(u => u.cargo === 'admin' || !u.solicitado || u.aprovado);
 
                 if (subFilter === 'active') {
@@ -551,7 +547,6 @@
                 }
             }
 
-            // 3. Filtro da Barra de Busca por Texto (ID/Pin ou Nome)
             if (searchQuery !== '') {
                 listaFiltrada = listaFiltrada.filter(u => 
                     String(u.id).includes(searchQuery) || 
@@ -663,7 +658,6 @@
             }
         }
 
-        // Função unificada para atualizar os estados combinados no banco de dados
         async function changeStatus(userId, approvedState, requestedState) {
             try {
                 const response = await fetch(`${apiBase}/api/admin/usuarios/${userId}/status`, {
