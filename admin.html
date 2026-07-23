@@ -456,12 +456,37 @@
         }
 
         function openDetails(userId) {
-            const user = serverData.usuarios.find(u => String(u.id) === String(userId));
-            if (!user) return;
-            document.getElementById('modal-user-title').textContent = `Dados de @${user.usuario}`;
-            let situacaoText = user.aprovado ? 'Aprovado / Ativo' : (user.solicitado ? 'Aguardando Liberação' : 'Conta Bloqueada');
-            document.getElementById('modal-info-body').innerHTML = `<div class="info-row"><span>ID:</span><span>#${user.id}</span></div><div class="info-row"><span>Usuário:</span><span>${user.usuario}</span></div><div class="info-row"><span>Situação:</span><span>${situacaoText}</span></div>`;
-            detailsModal.classList.add('active');
+        const user = serverData.usuarios.find(u => String(u.id) === String(userId));
+        if (!user) return;
+
+        document.getElementById('modal-user-title').textContent = `Dados de @${user.usuario}`;
+
+        // Define o texto do status da conta
+        let situacaoText = user.aprovado 
+            ? 'Aprovado / Ativo' 
+            : (user.solicitado ? 'Aguardando Liberação' : 'Conta Bloqueada');
+
+        // Formata a data de entrada do usuário no acervo
+        const dataEntrada = user.created_at 
+            ? new Date(user.created_at).toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            })
+            : 'Não informada';
+
+        // Preenche o modal com os dados do usuário
+        document.getElementById('modal-info-body').innerHTML = `
+            <div class="info-row"><span>ID:</span><span>#${user.id}</span></div>
+            <div class="info-row"><span>Usuário:</span><span>${user.usuario}</span></div>
+            <div class="info-row"><span>Cargo:</span><span>${user.cargo || 'comum'}</span></div>
+            <div class="info-row"><span>Situação:</span><span>${situacaoText}</span></div>
+            <div class="info-row"><span>Membro desde:</span><span>${dataEntrada}</span></div>
+            <div class="info-row"><span>Livros este mês:</span><span>${user.livros_mes || 0}</span></div>
+            <div class="info-row"><span>Total de livros:</span><span>${user.total_livros || 0}</span></div>
+        `;
+
+        detailsModal.classList.add('active');
         }
         function closeDetails() { detailsModal.classList.remove('active'); }
 
@@ -500,4 +525,4 @@
         loadData();
     </script>
 </body>
-</html>
+</html>>

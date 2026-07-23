@@ -143,8 +143,9 @@
     </div>
 
     <script>
-        // Configuração dinâmica da API idêntica ao dashboard
-        const apiBase = window.location.protocol === 'file:'
+        // Detecta se está rodando localmente (seja Live Server, file: ou localhost)
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+        const apiBase = isLocal
             ? 'http://localhost:4000'
             : window.location.origin;
 
